@@ -3,6 +3,7 @@ import {
   ImageModelV3,
   LanguageModelV3,
   ProviderV3,
+  SpeechModelV3,
 } from "@ai-sdk/provider";
 import {
   FetchFunction,
@@ -18,6 +19,12 @@ import {
   ZhipuEmbeddingModelId,
   ZhipuEmbeddingSettings,
 } from "./zhipu-embedding-settings";
+import {
+  ZhipuSpeechModel,
+  ZhipuSpeechModelId,
+  ZhipuSpeechSettings,
+} from "./zhipu-speech-model";
+import { webSearch } from "./zhipu-tools";
 
 export interface ZhipuProvider extends ProviderV3 {
   (modelId: ZhipuChatModelId, settings?: ZhipuChatSettings): LanguageModelV3;
@@ -65,6 +72,25 @@ Creates a model for image generation.
 @deprecated Use `imageModel` instead.
 */
   image(modelId: ZhipuImageModelId): ImageModelV3;
+
+  /**
+Creates a model for text-to-speech.
+*/
+  speechModel(
+    modelId: ZhipuSpeechModelId,
+    settings?: ZhipuSpeechSettings,
+  ): SpeechModelV3;
+
+  /**
+Provider-defined tools for Zhipu AI capabilities.
+*/
+  readonly tools: {
+    /**
+     * Web search tool — the model performs server-side web search.
+     * @see https://docs.bigmodel.cn/api-reference/工具-api/网络搜索
+     */
+    webSearch: typeof webSearch;
+  };
 }
 
 export interface ZhipuProviderSettings {
@@ -144,6 +170,17 @@ export function createZhipu(
       },
     });
 
+  const createSpeechModel = (
+    modelId: ZhipuSpeechModelId,
+    settings: ZhipuSpeechSettings = {},
+  ) =>
+    new ZhipuSpeechModel(modelId, settings, {
+      provider: "zhipu.speech",
+      baseURL,
+      headers: getHeaders,
+      fetch: options.fetch,
+    });
+
   const provider = function (
     modelId: ZhipuChatModelId,
     settings?: ZhipuChatSettings,
@@ -166,6 +203,12 @@ export function createZhipu(
 
   provider.image = createImageModel;
   provider.imageModel = createImageModel;
+
+  provider.speechModel = createSpeechModel;
+
+  provider.tools = {
+    webSearch: webSearch,
+  };
 
   return provider;
 }

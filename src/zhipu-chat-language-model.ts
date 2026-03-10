@@ -175,16 +175,19 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       });
     }
 
-    if (
-      tools &&
-      tools.length > 0 &&
-      tools.some((tool) => tool.type !== "function")
-    ) {
-      warnings.push({
-        type: "unsupported",
-        feature: "tools",
-        details: "Provider-defined tools are not implemented",
-      });
+    // Separate function tools and provider tools
+    const functionTools = tools?.filter((tool) => tool.type === "function") ?? [];
+    const providerTools = tools?.filter((tool) => tool.type === "provider") ?? [];
+
+    // Check for unsupported provider tools
+    for (const tool of providerTools) {
+      if (tool.id !== "zhipu.web_search") {
+        warnings.push({
+          type: "unsupported",
+          feature: "tools",
+          details: `Provider tool "${tool.id}" is not supported. Supported: zhipu.web_search`,
+        });
+      }
     }
 
     if (
@@ -239,19 +242,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
 
       // tools:
       tool_choice: "auto",
-      tools:
-        tools
-          ?.filter((tool) => tool.type === "function")
-          .map((tool) => ({
-            type: "function" as const,
-            function: {
-              name: tool.name,
-              description: tool.description ?? undefined,
-              parameters: tool.inputSchema,
-            },
-          })) ?? undefined,
-
-      // TODO: add provider-specific tool (web_search|retrieval)
+      tools: buildToolsArray(functionTools, providerTools),
     };
 
     return {
@@ -265,9 +256,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doGenerate"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    // Support both direct providerOptions and nested providerOptions.zhipu
-    const rawOptions = options.providerOptions ?? {};
-    const zhipuOptions = (rawOptions.zhipu ?? rawOptions) as ZhipuProviderOptions;
+    const zhipuOptions = (options.providerOptions ?? {}) as ZhipuProviderOptions;
 
     const fullArgs = {
       ...args,
@@ -355,9 +344,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doStream"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    // Support both direct providerOptions and nested providerOptions.zhipu
-    const rawOptions = options.providerOptions ?? {};
-    const zhipuOptions = (rawOptions.zhipu ?? rawOptions) as ZhipuProviderOptions;
+    const zhipuOptions = (options.providerOptions ?? {}) as ZhipuProviderOptions;
 
     const body = { ...args, ...zhipuOptions, stream: true };
 
@@ -622,6 +609,59 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       response: { headers: responseHeaders },
     };
   }
+}
+
+import type {
+  LanguageModelV3FunctionTool,
+  LanguageModelV3ProviderTool,
+} from "@ai-sdk/provider";
+
+/**
+ * Build the Zhipu tools array from function tools and provider tools.
+ * Returns undefined when empty (Zhipu API doesn't accept empty arrays).
+ */
+function buildToolsArray(
+  functionTools: LanguageModelV3FunctionTool[],
+  providerTools: LanguageModelV3ProviderTool[],
+): unknown[] | undefined {
+  const zhipuTools: unknown[] = [];
+
+  // Add function tools
+  for (const tool of functionTools) {
+    zhipuTools.push({
+      type: "function",
+      function: {
+        name: tool.name,
+        description: tool.description ?? undefined,
+        parameters: tool.inputSchema,
+      },
+    });
+  }
+
+  // Add provider tools
+  for (const tool of providerTools) {
+    switch (tool.id) {
+      case "zhipu.web_search": {
+        const args = tool.args as Record<string, unknown>;
+        zhipuTools.push({
+          type: "web_search",
+          web_search: {
+            enable: true,
+            search_engine: args.searchEngine ?? undefined,
+            search_intent: args.searchIntent ?? undefined,
+            count: args.count ?? undefined,
+            search_domain_filter: args.searchDomainFilter ?? undefined,
+            search_recency_filter: args.searchRecencyFilter ?? undefined,
+            content_size: args.contentSize ?? undefined,
+            search_result: true,
+          },
+        });
+        break;
+      }
+    }
+  }
+
+  return zhipuTools.length > 0 ? zhipuTools : undefined;
 }
 
 // limited version of the schema, focussed on what is needed for the implementation

@@ -1,12 +1,10 @@
-import type { JSONObject, SharedV3ProviderOptions } from "@ai-sdk/provider";
+import type { SharedV3ProviderOptions } from "@ai-sdk/provider";
 import type { ZhipuProviderOptions } from "./zhipu-chat-settings";
 import type { ZhipuImageProviderOptions } from "./zhipu-image-options";
 
 /**
- * Creates properly typed `providerOptions` for Zhipu chat models.
- *
- * Since this SDK is exclusively for Zhipu AI, this helper removes the need
- * for namespace nesting — pass your options directly.
+ * Type helper for Zhipu chat model `providerOptions`.
+ * Pass your options directly — no nesting required.
  *
  * @example
  * ```ts
@@ -25,11 +23,11 @@ import type { ZhipuImageProviderOptions } from "./zhipu-image-options";
 export function zhipuOptions(
   options: ZhipuProviderOptions,
 ): SharedV3ProviderOptions {
-  return { zhipu: options as unknown as JSONObject };
+  return options as unknown as SharedV3ProviderOptions;
 }
 
 /**
- * Creates properly typed `providerOptions` for Zhipu image models.
+ * Type helper for Zhipu image model `providerOptions`.
  *
  * @example
  * ```ts
@@ -45,5 +43,5 @@ export function zhipuOptions(
 export function zhipuImageOptions(
   options: ZhipuImageProviderOptions,
 ): SharedV3ProviderOptions {
-  return { zhipu: options as unknown as JSONObject };
+  return options as unknown as SharedV3ProviderOptions;
 }

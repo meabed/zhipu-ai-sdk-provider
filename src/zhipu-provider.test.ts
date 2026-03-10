@@ -121,4 +121,25 @@ describe("createZhipu", () => {
     const model = provider.chat("custom-model-id");
     expect(model.modelId).toBe("custom-model-id");
   });
+
+  it("should create speech models via speechModel()", () => {
+    const provider = createZhipu({ apiKey: "test-key" });
+    const model = provider.speechModel("glm-tts");
+    expect(model.modelId).toBe("glm-tts");
+    expect(model.provider).toBe("zhipu.speech");
+    expect(model.specificationVersion).toBe("v3");
+  });
+
+  it("should expose tools.webSearch", () => {
+    const provider = createZhipu({ apiKey: "test-key" });
+    expect(provider.tools).toBeDefined();
+    expect(typeof provider.tools.webSearch).toBe("function");
+  });
+
+  it("should create a valid webSearch tool", () => {
+    const provider = createZhipu({ apiKey: "test-key" });
+    const tool = provider.tools.webSearch({ searchEngine: "search_pro" });
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
+  });
 });

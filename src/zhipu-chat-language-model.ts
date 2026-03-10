@@ -437,11 +437,6 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
                 type: "response-metadata",
                 ...getResponseMetadata(value),
               });
-
-              controller.enqueue({
-                type: "text-start",
-                id: "0",
-              });
             }
 
             if (value.usage != null) {
@@ -485,6 +480,15 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
             }
 
             if (delta.content != null) {
+              // Close reasoning part before starting text
+              if (isActiveReasoning) {
+                controller.enqueue({
+                  type: "reasoning-end",
+                  id: "reasoning-0",
+                });
+                isActiveReasoning = false;
+              }
+
               if (!isActiveText) {
                 controller.enqueue({ type: "text-start", id: "txt-0" });
                 isActiveText = true;
@@ -498,6 +502,19 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
             }
 
             if (delta.tool_calls != null) {
+              // Close open parts before tool calls
+              if (isActiveReasoning) {
+                controller.enqueue({
+                  type: "reasoning-end",
+                  id: "reasoning-0",
+                });
+                isActiveReasoning = false;
+              }
+              if (isActiveText) {
+                controller.enqueue({ type: "text-end", id: "txt-0" });
+                isActiveText = false;
+              }
+
               for (const toolCallDelta of delta.tool_calls) {
                 const index = toolCallDelta.index;
 
@@ -611,6 +628,15 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
           },
 
           flush(controller) {
+            if (isActiveReasoning) {
+              controller.enqueue({
+                type: "reasoning-end",
+                id: "reasoning-0",
+              });
+            }
+            if (isActiveText) {
+              controller.enqueue({ type: "text-end", id: "txt-0" });
+            }
             controller.enqueue({
               type: "finish",
               finishReason,

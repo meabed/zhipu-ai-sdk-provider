@@ -36,7 +36,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   readonly specificationVersion = "v3" as const;
   readonly supportedUrls: Record<string, RegExp[]> = {
     "image/*": [/^data:image\/[a-zA-Z]+;base64,/, /^https?:\/\/.+$/i],
-    "video/*": [/^https?:\/\/.+\.(mp4|webm|ogg)$/i],
+    "application/pdf": [/^https?:\/\/.+$/i, /^data:application\/pdf;base64,/],
   };
 
   readonly modelId: ZhipuChatModelId;

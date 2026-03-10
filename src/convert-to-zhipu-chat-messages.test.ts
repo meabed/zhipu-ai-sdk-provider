@@ -113,7 +113,7 @@ describe("user messages", () => {
     ]);
   });
 
-  it("should convert video URL parts", () => {
+  it("should convert video URL parts as file_url", () => {
     const result = convertToZhipuChatMessages([
       {
         role: "user",
@@ -134,29 +134,68 @@ describe("user messages", () => {
         content: [
           { type: "text", text: "Describe this video" },
           {
-            type: "video_url",
-            video_url: { url: "https://example.com/video.mp4" },
+            type: "file_url",
+            file_url: { url: "https://example.com/video.mp4" },
           },
         ],
       },
     ]);
   });
 
-  it("should throw for unsupported file types", () => {
-    expect(() =>
-      convertToZhipuChatMessages([
-        {
-          role: "user",
-          content: [
-            {
-              type: "file",
-              data: new Uint8Array([0, 1]),
-              mediaType: "audio/mp3",
-            },
-          ],
-        },
-      ]),
-    ).toThrow();
+  it("should convert PDF URL parts as file_url", () => {
+    const result = convertToZhipuChatMessages([
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Summarize this document" },
+          {
+            type: "file",
+            data: new URL("https://example.com/doc.pdf"),
+            mediaType: "application/pdf",
+          },
+        ],
+      },
+    ]);
+
+    expect(result).toStrictEqual([
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Summarize this document" },
+          {
+            type: "file_url",
+            file_url: { url: "https://example.com/doc.pdf" },
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should convert audio file parts as file_url", () => {
+    const result = convertToZhipuChatMessages([
+      {
+        role: "user",
+        content: [
+          {
+            type: "file",
+            data: new URL("https://example.com/audio.mp3"),
+            mediaType: "audio/mp3",
+          },
+        ],
+      },
+    ]);
+
+    expect(result).toStrictEqual([
+      {
+        role: "user",
+        content: [
+          {
+            type: "file_url",
+            file_url: { url: "https://example.com/audio.mp3" },
+          },
+        ],
+      },
+    ]);
   });
 });
 

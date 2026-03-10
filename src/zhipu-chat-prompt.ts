@@ -26,7 +26,7 @@ export interface ZhipuUserMessage extends JsonRecord<ZhipuUserMessageParts> {
 export type ZhipuUserMessageParts =
   | ZhipuUserMessageTextPart
   | ZhipuUserMessageImagePart
-  | ZhipuUserMessageVideoPart;
+  | ZhipuUserMessageFilePart;
 
 export interface ZhipuUserMessageTextPart extends JsonRecord {
   type: "text";
@@ -40,9 +40,9 @@ export interface ZhipuUserMessageImagePart extends JsonRecord {
   };
 }
 
-export interface ZhipuUserMessageVideoPart extends JsonRecord {
-  type: "video_url";
-  video_url: {
+export interface ZhipuUserMessageFilePart extends JsonRecord {
+  type: "file_url";
+  file_url: {
     url: string;
   };
 }

@@ -1,6 +1,5 @@
 import {
   LanguageModelV3Prompt,
-  UnsupportedFunctionalityError,
 } from "@ai-sdk/provider";
 import { convertUint8ArrayToBase64 } from "@ai-sdk/provider-utils";
 import { ZhipuPrompt } from "./zhipu-chat-prompt";
@@ -68,21 +67,19 @@ export function convertToZhipuChatMessages(
                   };
                 }
 
-                if (
-                  part.mediaType.startsWith("video/") &&
+                // All non-image files (PDFs, videos, documents, etc.) → file_url
+                const fileUrl =
                   part.data instanceof URL
-                ) {
-                  return {
-                    type: "video_url",
-                    video_url: {
-                      url: part.data.toString(),
-                    },
-                  };
-                }
-
-                throw new UnsupportedFunctionalityError({
-                  functionality: "File content parts in user messages",
-                });
+                    ? part.data.toString()
+                    : typeof part.data === "string"
+                      ? part.data
+                      : `data:${part.mediaType};base64,${convertUint8ArrayToBase64(part.data)}`;
+                return {
+                  type: "file_url",
+                  file_url: {
+                    url: fileUrl,
+                  },
+                };
               }
             }
           }),

@@ -354,6 +354,73 @@ const { text } = await generateText({
 });
 ```
 
+### File / PDF Analysis
+
+Vision models support `file_url` for PDFs and other documents via the AI SDK `file` content part. Use `streamText` or `generateText`:
+
+```ts
+import { streamText } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+
+const result = streamText({
+  model: zhipu("glm-4.6v-flash"),
+  messages: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "file",
+          data: new URL("https://example.com/report.pdf"),
+          mimeType: "application/pdf",
+        },
+        { type: "text", text: "Summarize this document." },
+      ],
+    },
+  ],
+});
+
+for await (const chunk of result.textStream) {
+  process.stdout.write(chunk);
+}
+```
+
+You can also pass base64-encoded files or mix images with documents:
+
+```ts
+import { streamText } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+import { readFileSync } from "fs";
+
+const pdfBuffer = readFileSync("./contract.pdf");
+
+const result = streamText({
+  model: zhipu("glm-4.6v"),
+  messages: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "file",
+          data: pdfBuffer,
+          mimeType: "application/pdf",
+        },
+        {
+          type: "image",
+          image: new URL("https://example.com/signature.png"),
+        },
+        { type: "text", text: "Compare the signature in the image with the one in the PDF contract." },
+      ],
+    },
+  ],
+});
+
+for await (const chunk of result.textStream) {
+  process.stdout.write(chunk);
+}
+```
+
+> **Supported file types:** Images (`image_url`), PDFs, documents, and other files (`file_url`). The Zhipu VLM processes document pages visually — no text extraction needed.
+
 ### Embeddings
 
 ```ts
@@ -458,7 +525,7 @@ When the Zhipu API provides `completion_tokens_details.reasoning_tokens`, it is 
 - ✅ Thinking / reasoning mode (GLM-5, GLM-4.7, GLM-4.5)
 - ✅ Preserved thinking (`clearThinking: false`)
 - ✅ Turn-level thinking control (enable/disable per request)
-- ✅ Vision (images and video URLs)
+- ✅ Vision (images and file URLs including PDFs)
 - ✅ Vision + reasoning models
 - ✅ Embeddings (`embed`, `embedMany`)
 - ✅ Image generation (`generateImage`)

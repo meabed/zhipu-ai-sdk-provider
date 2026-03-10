@@ -237,6 +237,50 @@ const { text } = await generateText({
 | `user_id` | `string` | End user ID for abuse detection (6–128 chars). |
 | `request_id` | `string` | Unique request ID. |
 | `tool_stream` | `boolean` | Enable streaming tool calls (GLM-4.6). |
+| `response_format` | `object` | `{ type: "text" }` or `{ type: "json_object" }` |
+
+### Structured Output / JSON Mode
+
+Use `generateObject` or `streamObject` for structured JSON output. The AI SDK automatically sets `response_format: { type: "json_object" }` and injects schema instructions into the prompt:
+
+```ts
+import { generateObject } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+import { z } from "zod";
+
+const { object } = await generateObject({
+  model: zhipu("glm-4.7"),
+  prompt: "Extract contact info: Zhang San, phone 13800138000, email zhang@example.com",
+  schema: z.object({
+    name: z.string(),
+    phone: z.string().optional(),
+    email: z.string().optional(),
+  }),
+});
+
+console.log(object); // { name: "Zhang San", phone: "13800138000", email: "zhang@example.com" }
+```
+
+You can also set JSON mode directly via `providerOptions`:
+
+```ts
+import { generateText } from "ai";
+import { zhipu, zhipuOptions } from "zhipu-ai-sdk-provider";
+
+const { text } = await generateText({
+  model: zhipu("glm-4.7"),
+  prompt: 'Return a JSON object with fields "name" and "age" for a person named Alice who is 30.',
+  providerOptions: zhipuOptions({
+    response_format: { type: "json_object" },
+  }),
+});
+
+const data = JSON.parse(text); // { name: "Alice", age: 30 }
+```
+
+> **Note:** Zhipu API supports `json_object` mode but does not natively enforce JSON Schema. When using `generateObject` with a schema, the AI SDK injects schema instructions into the prompt. For best results, describe the expected format clearly in your prompt.
+>
+> See [Zhipu Structured Output docs](https://docs.z.ai/guides/capabilities/struct-output).
 
 ### Tool Calling
 

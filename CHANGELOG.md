@@ -5,6 +5,7 @@
 ### New Features
 - **Web search provider tool** — `zhipu.tools.webSearch()` enables server-side web search. Supports all Zhipu search engines: `search_std`, `search_pro`, `search_pro_sogou`, `search_pro_quark`. Configurable result count, domain filtering, recency filtering, and content size.
 - **Text-to-speech** — `zhipu.speechModel("glm-tts")` for speech generation with voice, speed, volume, and format options.
+- **Structured output / JSON mode** — `response_format: { type: "json_object" }` supported via AI SDK's `generateObject`/`streamObject` and directly through `zhipuOptions({ response_format: { type: "json_object" } })`. Schema instructions are injected into prompts automatically by the AI SDK.
 - **Reasoning token estimation** — when the Zhipu API omits `completion_tokens_details.reasoning_tokens` (model-dependent), the provider now estimates the reasoning/text token split from streamed character counts instead of reporting 0.
 - **Flat provider options** — `zhipuOptions()` and `zhipuImageOptions()` no longer wrap in `{ zhipu: {} }`. Options are passed directly. No nesting anywhere in the SDK.
 - **Provider tool support in language model** — `getArgs()` now handles both `function` and `provider` tool types, converting `zhipu.web_search` to the Zhipu API's `{ type: "web_search", web_search: {...} }` format.
@@ -16,7 +17,7 @@
 - Added `buildToolsArray()` helper to cleanly separate function tools from provider tools
 
 ### Testing
-- Expanded from 121 → 137 tests across 11 test files
+- Expanded from 121 → 139 tests across 11 test files
 - Added `zhipu-tools.test.ts` (5 tests) — web search tool creation and configuration
 - Added `zhipu-speech-model.test.ts` (8 tests) — speech model construction, request body, warnings
 - Added provider tests for `speechModel()` and `tools.webSearch()`

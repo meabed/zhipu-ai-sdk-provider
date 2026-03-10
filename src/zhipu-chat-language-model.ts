@@ -195,11 +195,16 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       responseFormat.type === "json" &&
       responseFormat.schema
     ) {
+      // Zhipu API does not natively support JSON schema enforcement.
+      // The AI SDK injects schema instructions into the prompt automatically
+      // when defaultObjectGenerationMode is "json", so this still works —
+      // the model just won't enforce strict schema compliance at the API level.
       warnings.push({
-        type: "unsupported",
-        feature: "responseFormat",
-        details:
-          "Structured output with schema is not supported, use json response format instead.",
+        type: "other",
+        message:
+          "Zhipu API does not support native JSON schema enforcement. " +
+          "Schema instructions are injected into the prompt by the AI SDK. " +
+          "Model output may not strictly match the schema.",
       });
     }
 

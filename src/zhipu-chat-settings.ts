@@ -186,6 +186,22 @@ export interface ZhipuProviderOptions {
   request_id?: string;
 
   /**
+   * Specifies the response format of the model output.
+   *
+   * - `{ type: "text" }` — plain text mode (default).
+   * - `{ type: "json_object" }` — JSON mode. The model returns valid JSON.
+   *   When using JSON mode, clearly request JSON output in your prompt.
+   *
+   * This is also set automatically when using `generateObject` / `streamObject`
+   * from the AI SDK (`responseFormat: { type: "json" }` is mapped to `json_object`).
+   *
+   * @see https://docs.z.ai/guides/capabilities/struct-output
+   */
+  response_format?: {
+    type: "text" | "json_object";
+  };
+
+  /**
    * Enable streaming tool calls for GLM-4.6 models.
    * When enabled, tool calls are streamed incrementally.
    */

@@ -515,6 +515,55 @@ describe("doGenerate", () => {
       expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
       expect(body.response_format).toEqual({ type: "json_object" });
     });
+
+    it("should warn but still send json_object when schema is provided", async () => {
+      prepareJsonResponse({ content: '{"value":"Spark"}' });
+
+      const model = provider.chat("glm-4-flash");
+
+      const result = await model.doGenerate({
+        prompt: TEST_PROMPT,
+        responseFormat: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: { value: { type: "string" } },
+          },
+          name: "TestSchema",
+        },
+      });
+
+      const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+      const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
+      expect(body.response_format).toEqual({ type: "json_object" });
+
+      // Should produce an "other" warning about no native schema enforcement
+      expect(result.warnings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "other",
+            message: expect.stringContaining("does not support native JSON schema"),
+          }),
+        ]),
+      );
+    });
+
+    it("should allow response_format override via providerOptions", async () => {
+      prepareJsonResponse({ content: '{"value":"Spark"}' });
+
+      const model = provider.chat("glm-4-flash");
+
+      await model.doGenerate({
+        prompt: TEST_PROMPT,
+        providerOptions: {
+          response_format: { type: "json_object" },
+        },
+      });
+
+      const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+      const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
+      expect(body.response_format).toEqual({ type: "json_object" });
+    });
   });
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "zhipu-ai-sdk-provider",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Vercel AI SDK provider for Zhipu AI — GLM language models, embeddings, image generation, web search, and text-to-speech",
   "keywords": [
     "zhipu",

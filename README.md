@@ -421,7 +421,6 @@ When the Zhipu API provides `completion_tokens_details.reasoning_tokens`, it is 
 - ✅ Cached token accounting (`inputTokens.cacheRead`)
 - ✅ Reasoning token accounting (`outputTokens.reasoning`)
 - ✅ Reasoning token estimation when API omits breakdown
-- ✅ Flat provider options — no `{ zhipu: {} }` nesting
 
 ## Exported Types
 

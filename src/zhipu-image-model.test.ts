@@ -58,12 +58,7 @@ describe("ZhipuImageModel", () => {
   it("should generate image and return URL", async () => {
     prepareJsonResponse({ url: "https://example.com/image.png" });
 
-    const result = await model.doGenerate({
-      prompt: "A beautiful sunset",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    const result = await model.doGenerate(BASE_OPTIONS);
 
     expect(result.images).toStrictEqual(["https://example.com/image.png"]);
   });
@@ -71,12 +66,7 @@ describe("ZhipuImageModel", () => {
   it("should include providerMetadata with image URLs", async () => {
     prepareJsonResponse({ url: "https://example.com/image.png" });
 
-    const result = await model.doGenerate({
-      prompt: "A cat",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "A cat" });
 
     expect(result.providerMetadata).toStrictEqual({
       zhipu: {
@@ -88,12 +78,7 @@ describe("ZhipuImageModel", () => {
   it("should pass model and prompt in request body", async () => {
     prepareJsonResponse();
 
-    await model.doGenerate({
-      prompt: "A landscape with mountains",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    await model.doGenerate({ ...BASE_OPTIONS, prompt: "A landscape with mountains" });
 
     const calls =
       server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
@@ -110,12 +95,7 @@ describe("ZhipuImageModel", () => {
   it("should pass authorization header", async () => {
     prepareJsonResponse();
 
-    await model.doGenerate({
-      prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test" });
 
     const calls =
       server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
@@ -127,12 +107,7 @@ describe("ZhipuImageModel", () => {
   it("should warn when n > 1", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({
-      prompt: "Test",
-      n: 4,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", n: 4 });
 
     expect(result.warnings).toContainEqual({
       type: "unsupported",
@@ -144,13 +119,7 @@ describe("ZhipuImageModel", () => {
   it("should warn when aspectRatio is provided", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({
-      prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      aspectRatio: "16:9",
-      providerOptions: {},
-    });
+    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", aspectRatio: "16:9" });
 
     expect(result.warnings).toContainEqual({
       type: "unsupported",
@@ -163,13 +132,7 @@ describe("ZhipuImageModel", () => {
   it("should warn when seed is provided", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({
-      prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      seed: 42,
-      providerOptions: {},
-    });
+    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", seed: 42 });
 
     expect(result.warnings).toContainEqual({
       type: "unsupported",
@@ -181,12 +144,7 @@ describe("ZhipuImageModel", () => {
     prepareJsonResponse();
 
     await expect(
-      model.doGenerate({
-        prompt: "Test",
-        n: 1,
-        size: "100x100",
-        providerOptions: {},
-      }),
+      model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", size: "100x100" }),
     ).rejects.toThrow("Invalid size");
   });
 
@@ -194,12 +152,7 @@ describe("ZhipuImageModel", () => {
     prepareJsonResponse();
 
     await expect(
-      model.doGenerate({
-        prompt: "Test",
-        n: 1,
-        size: "1000x1000",
-        providerOptions: {},
-      }),
+      model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", size: "1000x1000" }),
     ).rejects.toThrow("Invalid size");
   });
 
@@ -207,14 +160,9 @@ describe("ZhipuImageModel", () => {
     prepareJsonResponse();
 
     await model.doGenerate({
+      ...BASE_OPTIONS,
       prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {
-        zhipu: {
-          quality: "hd",
-        },
-      },
+      providerOptions: { zhipu: { quality: "hd" } },
     });
 
     const calls =
@@ -230,12 +178,7 @@ describe("ZhipuImageModel", () => {
   it("should include response metadata", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({
-      prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test" });
 
     expect(result.response.modelId).toBe("cogview-4-250304");
     expect(result.response.timestamp).toBeInstanceOf(Date);
@@ -251,10 +194,8 @@ describe("ZhipuImageModel", () => {
     });
 
     await provider.imageModel("cogview-4").doGenerate({
+      ...BASE_OPTIONS,
       prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
       headers: { "X-Request": "request-value" },
     });
 
@@ -269,12 +210,7 @@ describe("ZhipuImageModel", () => {
   it("should not include warnings when no unsupported features are used", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({
-      prompt: "Test",
-      n: 1,
-      size: "1024x1024",
-      providerOptions: {},
-    });
+    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test" });
 
     expect(result.warnings).toStrictEqual([]);
   });

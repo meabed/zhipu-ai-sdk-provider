@@ -1,8 +1,20 @@
 import { describe, it, expect } from "vitest";
+import { ImageModelV3CallOptions } from "@ai-sdk/provider";
 import { createZhipu } from "./zhipu-provider";
 import { createTestServer } from "./test-server";
 
 const TEST_API_KEY = "test-api-key";
+
+const BASE_OPTIONS: ImageModelV3CallOptions = {
+  prompt: "A beautiful sunset",
+  n: 1,
+  size: "1024x1024",
+  aspectRatio: undefined,
+  seed: undefined,
+  files: undefined,
+  mask: undefined,
+  providerOptions: {},
+};
 
 const server = createTestServer({
   "https://open.bigmodel.cn/api/paas/v4/images/generations": {

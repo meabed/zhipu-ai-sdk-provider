@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createZhipu } from "./zhipu-provider";
+import { ZhipuChatLanguageModel } from "./zhipu-chat-language-model";
 
 describe("createZhipu", () => {
   it("should create a provider with specificationVersion v3", () => {
@@ -69,7 +70,7 @@ describe("createZhipu", () => {
   it("should pass settings to chat model", () => {
     const provider = createZhipu({ apiKey: "test-key" });
     const model = provider.chat("glm-4-flash", { userId: "test-user" });
-    expect(model.settings.userId).toBe("test-user");
+    expect((model as ZhipuChatLanguageModel).settings.userId).toBe("test-user");
   });
 
   it("should pass thinking settings to chat model", () => {
@@ -77,7 +78,7 @@ describe("createZhipu", () => {
     const model = provider.chat("glm-4.7", {
       thinking: { type: "enabled" },
     });
-    expect(model.settings.thinking).toStrictEqual({ type: "enabled" });
+    expect((model as ZhipuChatLanguageModel).settings.thinking).toStrictEqual({ type: "enabled" });
   });
 
   it("should use default baseURL when not provided", () => {

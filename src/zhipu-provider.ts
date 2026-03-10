@@ -1,5 +1,6 @@
 import {
   EmbeddingModelV3,
+  ImageModelV3,
   LanguageModelV3,
   ProviderV3,
 } from "@ai-sdk/provider";
@@ -53,6 +54,17 @@ Creates a model for text embedding.
     modelId: ZhipuEmbeddingModelId,
     settings?: ZhipuEmbeddingSettings,
   ) => EmbeddingModelV3;
+
+  /**
+Creates a model for image generation.
+*/
+  imageModel(modelId: ZhipuImageModelId): ImageModelV3;
+
+  /**
+Creates a model for image generation.
+@deprecated Use `imageModel` instead.
+*/
+  image(modelId: ZhipuImageModelId): ImageModelV3;
 }
 
 export interface ZhipuProviderSettings {

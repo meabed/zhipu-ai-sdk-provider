@@ -2,9 +2,35 @@
   "name": "zhipu-ai-provider",
   "version": "0.2.1",
   "description": "Vercel AI SDK Custom Provider for Services from Zhipu",
-  "author": "Chen Xiang",
+  "keywords": [
+    "zhipu",
+    "bigmodel",
+    "glm",
+    "ai",
+    "provider",
+    "vercel-ai",
+    "vercel",
+    "ai-sdk"
+  ],
+  "homepage": "https://github.com/meabed/zhipu-ai-provider",
+  "bugs": {
+    "url": "https://github.com/meabed/zhipu-ai-provider/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meabed/zhipu-ai-provider.git"
+  },
   "license": "MIT",
+  "author": "Mohamed Meabed <mo.meabed@gmail.com>",
   "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -17,19 +43,11 @@
     "build:watch": "tsup --watch",
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
-    "type-check": "tsc --noEmit",
     "prettier-check": "prettier --check \"./**/*.ts*\"",
     "test": "pnpm test:node && pnpm test:edge",
     "test:edge": "vitest --config vitest.edge.config.js --run",
-    "test:node": "vitest --config vitest.node.config.js --run"
-  },
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    }
+    "test:node": "vitest --config vitest.node.config.js --run",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/provider": "^3.0.8",
@@ -48,28 +66,11 @@
     "vitest": "^4.0.18",
     "zod": "4.3.6"
   },
+  "packageManager": "pnpm@10.12.4",
   "engines": {
     "node": ">=18"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "homepage": "https://github.com/meabed/zhipu-ai-provider",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/meabed/zhipu-ai-provider.git"
-  },
-  "bugs": {
-    "url": "https://github.com/meabed/zhipu-ai-provider/issues"
-  },
-  "keywords": [
-    "zhipu",
-    "bigmodel",
-    "glm",
-    "ai",
-    "provider",
-    "vercel-ai",
-    "vercel",
-    "ai-sdk"
-  ]
+  }
 }

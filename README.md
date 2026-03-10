@@ -6,13 +6,13 @@ This is a [Zhipu](https://www.zhipuai.cn/) provider for the [AI SDK](https://sdk
 
 ```bash
 # npm
-npm i zhipu-ai-provider
+npm i zhipu-ai-sdk-provider
 
 # pnpm
-pnpm add zhipu-ai-provider
+pnpm add zhipu-ai-sdk-provider
 
 # yarn
-yarn add zhipu-ai-provider
+yarn add zhipu-ai-sdk-provider
 ```
 
 Set up your `.env` file / environment with your API key.
@@ -23,16 +23,16 @@ ZHIPU_API_KEY=<your-api-key>
 
 ## Provider Instance
 
-You can import the default provider instance `zhipu` from `zhipu-ai-provider` (This automatically reads the API key from the environment variable `ZHIPU_API_KEY`):
+You can import the default provider instance `zhipu` from `zhipu-ai-sdk-provider` (This automatically reads the API key from the environment variable `ZHIPU_API_KEY`):
 
 ```ts
-import { zhipu } from "zhipu-ai-provider";
+import { zhipu } from "zhipu-ai-sdk-provider";
 ```
 
 Alternatively, you can create a provider instance with custom configuration with `createZhipu`:
 
 ```ts
-import { createZhipu } from "zhipu-ai-provider";
+import { createZhipu } from "zhipu-ai-sdk-provider";
 
 const zhipu = createZhipu({
   baseURL: "https://open.bigmodel.cn/api/paas/v4",
@@ -107,7 +107,7 @@ You can use the following optional settings to customize the Zhipu provider inst
 
 ```ts
 import { generateText } from "ai";
-import { zhipu } from "zhipu-ai-provider";
+import { zhipu } from "zhipu-ai-sdk-provider";
 
 const { text } = await generateText({
   model: zhipu("glm-5"),
@@ -165,7 +165,7 @@ const { text } = await generateText({
 
 ```ts
 import { embed } from "ai";
-import { zhipu } from "zhipu-ai-provider";
+import { zhipu } from "zhipu-ai-sdk-provider";
 
 const { embedding } = await embed({
   model: zhipu.embeddingModel("embedding-3", {
@@ -183,7 +183,7 @@ Zhipu supports image generation with the `cogview` models, but the API does not 
 
 ```ts
 import { experimental_generateImage as generateImage } from "ai";
-import { zhipu } from "zhipu-ai-provider";
+import { zhipu } from "zhipu-ai-sdk-provider";
 
 const { image, providerMetadata } = await generateImage({
   model: zhipu.imageModel("cogview-4-250304"),
@@ -221,4 +221,4 @@ console.log(providerMetadata.zhipu.images[0].url);
 - **[Zhipu API Reference](https://docs.z.ai/api-reference/llm/chat-completion)**
 - **[GLM Model Guide](https://docs.z.ai/guides/llm/glm-4.7)**
 - **[Vercel AI SDK Documentation](https://sdk.vercel.ai/docs/introduction)**
-- **[Zhipu AI Provider Repo](https://github.com/meabed/zhipu-ai-provider)**
+- **[Zhipu AI Provider Repo](https://github.com/meabed/zhipu-ai-sdk-provider)**

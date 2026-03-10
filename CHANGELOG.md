@@ -1,4 +1,4 @@
-# zhipu-ai-provider
+# zhipu-ai-sdk-provider
 
 ## 0.3.0
 

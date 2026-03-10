@@ -1,6 +1,6 @@
 {
   "name": "zhipu-ai-sdk-provider",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Vercel AI SDK Custom Provider for Services from Zhipu",
   "keywords": [
     "zhipu",

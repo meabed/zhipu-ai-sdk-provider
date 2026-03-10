@@ -8,7 +8,6 @@ import {
 } from "@ai-sdk/provider";
 import {
   isParsableJson,
-  generateId,
   FetchFunction,
   ParseResult,
   combineHeaders,
@@ -99,10 +98,10 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
 
     if (
       !this.config.isMultiModel &&
-      prompt.every(
+      prompt.some(
         (msg) =>
           msg.role === "user" &&
-          !msg.content.every((part) => part.type === "text"),
+          msg.content.some((part) => part.type !== "text"),
       )
     ) {
       warnings.push({
@@ -222,9 +221,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       thinking: this.settings.thinking
         ? {
             type: this.settings.thinking.type,
-            ...(this.settings.thinking.clearThinking !== undefined && {
-              clear_thinking: this.settings.thinking.clearThinking,
-            }),
+            clear_thinking: this.settings.thinking.clearThinking,
           }
         : undefined,
 
@@ -296,32 +293,27 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
 
     const responseData = response as z.infer<typeof zhipuChatResponseSchema>;
     const choice = responseData.choices[0];
-
+    const message = choice.message;
     const content: LanguageModelV3Content[] = [];
 
-    // Extract text content
-    const responseText = responseData.choices[0].message.content;
-    const responseReasoningText =
-      responseData.choices[0].message.reasoning_content;
-
-    if (responseReasoningText) {
+    // Extract reasoning content (from dedicated field)
+    if (message.reasoning_content) {
       content.push({
         type: "reasoning",
-        text: responseReasoningText,
+        text: message.reasoning_content,
       });
     }
 
+    // Extract text content (may contain inline <think> tags)
+    const responseText = message.content;
     if (responseText) {
-      if (this.config.isReasoningModel && responseText.includes("<think>")) {
+      const thinkMatch = this.config.isReasoningModel
+        ? responseText.match(/<think>([\s\S]*?)<\/think>([\s\S]*)/)
+        : null;
+      if (thinkMatch) {
         content.push(
-          {
-            type: "reasoning",
-            text: responseText.split("<think>")[1].split("</think>")[0],
-          },
-          {
-            type: "text",
-            text: responseText.split("</think>")[1],
-          },
+          { type: "reasoning", text: thinkMatch[1] },
+          { type: "text", text: thinkMatch[2] },
         );
       } else {
         content.push({
@@ -332,14 +324,14 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
     }
 
     // Extract tool calls
-    if (responseData.choices[0].message.tool_calls) {
-      for (const toolCall of responseData.choices[0].message.tool_calls) {
+    if (message.tool_calls) {
+      for (const toolCall of message.tool_calls) {
         content.push({
           type: "tool-call",
           toolCallId: toolCall.id,
           toolName: toolCall.function.name,
           input: toolCall.function.arguments,
-          providerExecuted: toolCall.type === "function" ? false : true,
+          providerExecuted: toolCall.type !== "function",
         });
       }
     }
@@ -535,53 +527,37 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
                     });
                   }
 
+                  const toolCallId = toolCallDelta.id;
+                  const toolName = toolCallDelta.function.name;
+                  const args = toolCallDelta.function.arguments ?? "";
+
                   controller.enqueue({
                     type: "tool-input-start",
-                    id: toolCallDelta.id,
-                    toolName: toolCallDelta.function.name,
+                    id: toolCallId,
+                    toolName,
                   });
 
                   toolCalls[index] = {
-                    id: toolCallDelta.id,
+                    id: toolCallId,
                     type: "function",
-                    function: {
-                      name: toolCallDelta.function.name,
-                      arguments: toolCallDelta.function.arguments ?? "",
-                    },
+                    function: { name: toolName, arguments: args },
                     hasFinished: false,
                   };
 
-                  const toolCall = toolCalls[index];
+                  // Check if the full tool call arrived in one chunk (common for Zhipu)
+                  if (args.length > 0 && isParsableJson(args)) {
+                    controller.enqueue({
+                      type: "tool-input-end",
+                      id: toolCallId,
+                    });
 
-                  if (
-                    toolCall.function?.name != null &&
-                    toolCall.function?.arguments != null
-                  ) {
-                    // send delta if the argument text has already started:
-                    if (toolCall.function.arguments.length > 0) {
-                      controller.enqueue({
-                        type: "tool-input-start",
-                        id: toolCall.id,
-                        toolName: toolCall.function.name,
-                      });
-                    }
-
-                    // check if tool call is complete
-                    // (some providers send the full tool call in one chunk):
-                    if (isParsableJson(toolCall.function.arguments)) {
-                      controller.enqueue({
-                        type: "tool-input-end",
-                        id: toolCall.id,
-                      });
-
-                      controller.enqueue({
-                        type: "tool-call",
-                        toolCallId: toolCall.id ?? generateId(),
-                        toolName: toolCall.function.name,
-                        input: toolCall.function.arguments,
-                      });
-                      toolCall.hasFinished = true;
-                    }
+                    controller.enqueue({
+                      type: "tool-call",
+                      toolCallId,
+                      toolName,
+                      input: args,
+                    });
+                    toolCalls[index].hasFinished = true;
                   }
 
                   continue;
@@ -594,24 +570,19 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
                   continue;
                 }
 
-                if (toolCallDelta.function?.arguments != null) {
-                  toolCall.function!.arguments +=
-                    toolCallDelta.function?.arguments ?? "";
+                const argDelta = toolCallDelta.function.arguments ?? "";
+                if (argDelta) {
+                  toolCall.function.arguments += argDelta;
                 }
 
-                // send delta
                 controller.enqueue({
                   type: "tool-input-delta",
                   id: toolCall.id,
-                  delta: toolCallDelta.function.arguments ?? "",
+                  delta: argDelta,
                 });
 
                 // check if tool call is complete
-                if (
-                  toolCall.function?.name != null &&
-                  toolCall.function?.arguments != null &&
-                  isParsableJson(toolCall.function.arguments)
-                ) {
+                if (isParsableJson(toolCall.function.arguments)) {
                   controller.enqueue({
                     type: "tool-input-end",
                     id: toolCall.id,
@@ -619,7 +590,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
 
                   controller.enqueue({
                     type: "tool-call",
-                    toolCallId: toolCall.id ?? generateId(),
+                    toolCallId: toolCall.id,
                     toolName: toolCall.function.name,
                     input: toolCall.function.arguments,
                   });

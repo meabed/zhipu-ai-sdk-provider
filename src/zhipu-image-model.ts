@@ -76,16 +76,18 @@ export class ZhipuImageModel implements ImageModelV3 {
       warnings.push({ type: "unsupported", feature: "seed" });
     }
 
-    if (
-      size != null &&
-      !sizeSchema.safeParse({
-        width: parseInt(size.split("x")[0]),
-        height: parseInt(size.split("x")[1]),
-      }).success
-    ) {
-      throw new Error(
-        "Invalid size. Size must be an object with width and height, both divisible by 16, and within the range of 512 to 2048 pixels.",
-      );
+    if (size != null) {
+      const [w, h] = size.split("x");
+      if (
+        !sizeSchema.safeParse({
+          width: parseInt(w),
+          height: parseInt(h),
+        }).success
+      ) {
+        throw new Error(
+          "Invalid size. Size must be an object with width and height, both divisible by 16, and within the range of 512 to 2048 pixels.",
+        );
+      }
     }
 
     const currentDate = this.config._internal?.currentDate?.() ?? new Date();

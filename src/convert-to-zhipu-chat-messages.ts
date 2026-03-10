@@ -26,11 +26,21 @@ export function convertToZhipuChatMessages(
           break;
         }
 
-        if (content.every((part) => part.type === "text")) {
-          messages.push({
-            role: "user",
-            content: content.map((part) => part.text).join(""),
-          });
+        // Single pass: check if all text while collecting
+        let allText = true;
+        for (let j = 0; j < content.length; j++) {
+          if (content[j].type !== "text") {
+            allText = false;
+            break;
+          }
+        }
+
+        if (allText) {
+          let text = "";
+          for (const part of content) {
+            text += (part as { type: "text"; text: string }).text;
+          }
+          messages.push({ role: "user", content: text });
           break;
         }
 
@@ -81,7 +91,7 @@ export function convertToZhipuChatMessages(
       }
 
       case "assistant": {
-        let text = "";
+        const textParts: string[] = [];
         const toolCalls: Array<{
           id: string;
           type: "function";
@@ -91,7 +101,7 @@ export function convertToZhipuChatMessages(
         for (const part of content) {
           switch (part.type) {
             case "text": {
-              text += part.text;
+              textParts.push(part.text);
               break;
             }
             case "reasoning": {
@@ -116,7 +126,7 @@ export function convertToZhipuChatMessages(
         }
         messages.push({
           role: "assistant",
-          content: text,
+          content: textParts.join(""),
           prefix: isLastMessage ? true : undefined,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         });

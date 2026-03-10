@@ -23,13 +23,13 @@ export function computeTokenUsage(usage: UsageData): LanguageModelV3Usage {
     inputTokens: {
       total: promptTokens,
       noCache: promptTokens - cacheReadTokens,
-      cacheRead: cacheReadTokens || undefined,
+      cacheRead: cacheReadTokens > 0 ? cacheReadTokens : undefined,
       cacheWrite: undefined,
     },
     outputTokens: {
       total: completionTokens,
       text: completionTokens - reasoningTokens,
-      reasoning: reasoningTokens || undefined,
+      reasoning: reasoningTokens > 0 ? reasoningTokens : undefined,
     },
     raw: usage as JSONObject,
   };

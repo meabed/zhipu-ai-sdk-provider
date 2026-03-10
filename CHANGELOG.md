@@ -24,10 +24,21 @@
 - **Streaming tool calls** — fixed schema to support continuation chunks (partial `id`/`type`/`name`)
 
 ### Improvements
-- Rewrote README with model tables, feature support matrix, and real-world examples
+- **`zhipuOptions()` / `zhipuImageOptions()` helpers** — type-safe providerOptions without nesting under `zhipu` key
+- **Vision model IDs** — added `glm-4.6v`, `glm-4.6v-flash`, `glm-4.6v-flashx`, `glm-4.5v`
+- **`ZhipuProviderOptions`** — fully typed interface for all documented API parameters
+- **Performance: streaming hot path** — replaced triple `string.split()` with single regex match for `<think>` tag parsing
+- **Performance: duplicate events** — removed duplicate `tool-input-start` event emission in stream transform
+- **Performance: message conversion** — single-pass text detection instead of `every()` + `map()` + `join()` chain; array-based string building for assistant messages
+- **Performance: image size validation** — single `split("x")` call instead of two
+- **Performance: unused import** — removed unused `generateId` import
+- **Refactored** multi-model content warning from `every(…every())` to clearer `some(…some())` logic
+- **Refactored** `doGenerate` to reuse `choice` variable instead of repeating `responseData.choices[0]`
+- **Refactored** tool call continuation path — removed redundant null checks
 - Fixed `isMultiModel` regex to avoid false positives on model names like `cogview`
 - Fixed `toolChoice` warning to correctly check for unsupported modes
 - Updated `clearThinking` default documentation to `true`
+- Rewrote README with model tables, feature support matrix, and real-world examples
 
 ### Testing
 - Expanded from 31 → 121 tests across 9 test files

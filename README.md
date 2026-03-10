@@ -1,6 +1,6 @@
 # zhipu-ai-sdk-provider
 
-[Zhipu AI](https://www.zhipuai.cn/) provider for the [Vercel AI SDK](https://sdk.vercel.ai/). Integrates **GLM** language models, embedding models, and image generation models from [bigmodel.cn](https://bigmodel.cn/).
+[Zhipu AI](https://www.zhipuai.cn/) provider for the [Vercel AI SDK](https://sdk.vercel.ai/). Integrates **GLM** language models, embedding models, image generation, and text-to-speech from [bigmodel.cn](https://bigmodel.cn/).
 
 [![npm version](https://img.shields.io/npm/v/zhipu-ai-sdk-provider.svg)](https://www.npmjs.com/package/zhipu-ai-sdk-provider)
 [![license](https://img.shields.io/npm/l/zhipu-ai-sdk-provider.svg)](https://github.com/meabed/zhipu-ai-provider/blob/master/LICENSE.md)
@@ -126,6 +126,12 @@ const zhipu = createZhipu({
 | `cogview-4` | Standard CogView 4 |
 | `cogview-3-flash` | Fast image generation |
 
+### Speech Models
+
+| Model | Description |
+| --- | --- |
+| `glm-tts` | Text-to-speech model |
+
 ## Usage
 
 ### Text Generation
@@ -200,7 +206,7 @@ const { text } = await generateText({
 
 ### Provider Options (`zhipuOptions`)
 
-Use `zhipuOptions` to pass Zhipu-specific API parameters at call time. This is type-safe and avoids the standard SDK nesting under a provider key:
+Use `zhipuOptions` to pass Zhipu-specific API parameters at call time. Options are passed directly — no nesting required:
 
 ```ts
 import { generateText } from "ai";
@@ -251,6 +257,38 @@ const { text, toolResults } = await generateText({
   },
 });
 ```
+
+### Web Search (Provider Tool)
+
+Zhipu's built-in web search runs server-side — the model searches the web and incorporates results into its response automatically:
+
+```ts
+import { generateText } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+
+const { text } = await generateText({
+  model: zhipu("glm-4.7"),
+  prompt: "What are the latest AI news today?",
+  tools: {
+    web_search: zhipu.tools.webSearch({
+      searchEngine: "search_pro",
+      count: 5,
+      contentSize: "high",
+    }),
+  },
+});
+```
+
+#### Web Search Options
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `searchEngine` | `string` | `"search_std"`, `"search_pro"`, `"search_pro_sogou"`, `"search_pro_quark"` |
+| `searchIntent` | `boolean` | Perform search intent recognition first. Default `false`. |
+| `count` | `number` | Number of results (1–50). Default `10`. |
+| `searchDomainFilter` | `string` | Restrict to domain (e.g. `"www.example.com"`). |
+| `searchRecencyFilter` | `string` | `"oneDay"`, `"oneWeek"`, `"oneMonth"`, `"oneYear"`, `"noLimit"` |
+| `contentSize` | `string` | `"medium"` (summaries) or `"high"` (full context). |
 
 ### Vision
 
@@ -314,30 +352,76 @@ const { images } = await generateImage({
 console.log(images[0]); // URL string
 ```
 
-> **Note:** The Zhipu image API returns URLs, not base64 data. Image URLs are also available in `providerMetadata.zhipu.images[0].url`.
-
 #### Image Size Constraints
 
 - Width and height must be between 512–2048 pixels
 - Both must be divisible by 16
 - Total pixels (width × height) must not exceed 2²¹
 
+### Text-to-Speech
+
+```ts
+import { generateSpeech } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+
+const { audio } = await generateSpeech({
+  model: zhipu.speechModel("glm-tts"),
+  text: "Hello, welcome to Zhipu AI!",
+  voice: "female",
+  speed: 1.0,
+  outputFormat: "wav",
+});
+
+// audio is a Uint8Array of the WAV file
+```
+
+#### Speech Options
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `voice` | `string` | Voice selection (e.g. `"female"`, `"male"`). |
+| `speed` | `number` | Speech speed. |
+| `outputFormat` | `string` | Audio format. Default `"wav"`. |
+| `volume` | `number` | Volume (0.1–2.0). Set via model settings. |
+
+## Token Usage
+
+The provider reports detailed token usage including cached and reasoning tokens:
+
+```ts
+const { usage } = await generateText({
+  model: zhipu("glm-4.7"),
+  prompt: "Think step by step: what is 15 * 23?",
+});
+
+console.log(usage);
+// {
+//   inputTokens:  { total: 100, noCache: 80, cacheRead: 20 },
+//   outputTokens: { total: 50,  text: 30,    reasoning: 20 },
+// }
+```
+
+When the Zhipu API provides `completion_tokens_details.reasoning_tokens`, it is used directly. When the API omits this field (model-dependent), the provider estimates the reasoning/text split from streamed character counts.
+
 ## Features
 
 - ✅ Text generation (`generateText`, `streamText`)
 - ✅ Structured output (JSON mode)
 - ✅ Tool / function calling
+- ✅ Web search (provider-defined tool via `zhipu.tools.webSearch()`)
+- ✅ Text-to-speech (`generateSpeech` via `zhipu.speechModel("glm-tts")`)
 - ✅ Streaming with reasoning events (`reasoning-start`, `reasoning-delta`, `reasoning-end`)
 - ✅ Thinking / reasoning mode (GLM-5, GLM-4.7, GLM-4.5)
 - ✅ Preserved thinking (`clearThinking: false`)
+- ✅ Turn-level thinking control (enable/disable per request)
 - ✅ Vision (images and video URLs)
 - ✅ Vision + reasoning models
 - ✅ Embeddings (`embed`, `embedMany`)
 - ✅ Image generation (`generateImage`)
 - ✅ Cached token accounting (`inputTokens.cacheRead`)
 - ✅ Reasoning token accounting (`outputTokens.reasoning`)
-- ⬜ Provider-defined tools (`web_search`, `retrieval`)
-- ⬜ Voice / speech models
+- ✅ Reasoning token estimation when API omits breakdown
+- ✅ Flat provider options — no `{ zhipu: {} }` nesting
 
 ## Exported Types
 
@@ -352,9 +436,17 @@ import type {
   ZhipuEmbeddingModelId,
   ZhipuImageModelId,
   ZhipuImageProviderOptions,
+  ZhipuSpeechModelId,
+  ZhipuSpeechSettings,
 } from "zhipu-ai-sdk-provider";
 
-import { zhipu, createZhipu, zhipuOptions, zhipuImageOptions } from "zhipu-ai-sdk-provider";
+import {
+  zhipu,
+  createZhipu,
+  zhipuOptions,
+  zhipuImageOptions,
+  webSearch,
+} from "zhipu-ai-sdk-provider";
 ```
 
 ## Links
@@ -362,6 +454,7 @@ import { zhipu, createZhipu, zhipuOptions, zhipuImageOptions } from "zhipu-ai-sd
 - [Zhipu API Reference](https://docs.z.ai/api-reference/llm/chat-completion)
 - [GLM Model Guide](https://docs.z.ai/guides/llm/glm-4.7)
 - [Thinking Mode Docs](https://docs.z.ai/guides/capabilities/thinking)
+- [Web Search API](https://docs.bigmodel.cn/api-reference/工具-api/网络搜索)
 - [Vercel AI SDK Docs](https://sdk.vercel.ai/docs/introduction)
 - [GitHub Repository](https://github.com/meabed/zhipu-ai-provider)
 

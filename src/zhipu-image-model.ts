@@ -117,15 +117,6 @@ export class ZhipuImageModel implements ImageModelV3 {
     return {
       images: typedResponse.data.map((item) => item.url),
       warnings,
-      providerMetadata: {
-        zhipu: {
-          images: typedResponse.data.map((item) => {
-            return {
-              url: item.url,
-            };
-          }),
-        },
-      },
       response: {
         timestamp: currentDate,
         modelId: this.modelId,

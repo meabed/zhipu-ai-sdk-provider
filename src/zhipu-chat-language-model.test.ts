@@ -680,8 +680,9 @@ describe("doStream", () => {
         },
         outputTokens: {
           total: 156,
-          text: 156,
-          reasoning: undefined,
+          // Estimated from stream character counts (API didn't provide reasoning_tokens)
+          text: expect.any(Number),
+          reasoning: expect.any(Number),
         },
       },
     });

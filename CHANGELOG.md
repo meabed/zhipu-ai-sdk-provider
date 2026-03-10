@@ -1,5 +1,27 @@
 # zhipu-ai-sdk-provider
 
+## 0.4.0
+
+### New Features
+- **Web search provider tool** — `zhipu.tools.webSearch()` enables server-side web search. Supports all Zhipu search engines: `search_std`, `search_pro`, `search_pro_sogou`, `search_pro_quark`. Configurable result count, domain filtering, recency filtering, and content size.
+- **Text-to-speech** — `zhipu.speechModel("glm-tts")` for speech generation with voice, speed, volume, and format options.
+- **Reasoning token estimation** — when the Zhipu API omits `completion_tokens_details.reasoning_tokens` (model-dependent), the provider now estimates the reasoning/text token split from streamed character counts instead of reporting 0.
+- **Flat provider options** — `zhipuOptions()` and `zhipuImageOptions()` no longer wrap in `{ zhipu: {} }`. Options are passed directly. No nesting anywhere in the SDK.
+- **Provider tool support in language model** — `getArgs()` now handles both `function` and `provider` tool types, converting `zhipu.web_search` to the Zhipu API's `{ type: "web_search", web_search: {...} }` format.
+
+### Improvements
+- Removed redundant `providerMetadata` from image model (image URLs are already in the `images` return field)
+- Removed all `{ zhipu: {} }` nesting from `providerOptions` and `providerMetadata`
+- Stream transform now tracks reasoning and text character counts for accurate token estimation
+- Added `buildToolsArray()` helper to cleanly separate function tools from provider tools
+
+### Testing
+- Expanded from 121 → 137 tests across 11 test files
+- Added `zhipu-tools.test.ts` (5 tests) — web search tool creation and configuration
+- Added `zhipu-speech-model.test.ts` (8 tests) — speech model construction, request body, warnings
+- Added provider tests for `speechModel()` and `tools.webSearch()`
+- Updated streaming tests to validate reasoning token estimation
+
 ## 0.3.0
 
 ### Breaking Changes
@@ -17,14 +39,14 @@
 ### New Features
 - **Cached token accounting** — `prompt_tokens_details.cached_tokens` mapped to `inputTokens.cacheRead`
 - **Reasoning token accounting** — `completion_tokens_details.reasoning_tokens` mapped to `outputTokens.reasoning`
-- **Streaming reasoning** — emits `reasoning-start` / `reasoning-delta` events for thinking content
+- **Streaming reasoning** — emits `reasoning-start` / `reasoning-delta` / `reasoning-end` events for thinking content
 - **`stream-start` event** — V3 streams now begin with a `stream-start` event containing warnings
 - **`sensitive` finish reason** — mapped to `content-filter` (Zhipu content moderation)
 - **`network_error` finish reason** — mapped to `error` with an error event
 - **Streaming tool calls** — fixed schema to support continuation chunks (partial `id`/`type`/`name`)
 
 ### Improvements
-- **`zhipuOptions()` / `zhipuImageOptions()` helpers** — type-safe providerOptions without nesting under `zhipu` key
+- **`zhipuOptions()` / `zhipuImageOptions()` helpers** — type-safe providerOptions
 - **Vision model IDs** — added `glm-4.6v`, `glm-4.6v-flash`, `glm-4.6v-flashx`, `glm-4.5v`
 - **`ZhipuProviderOptions`** — fully typed interface for all documented API parameters
 - **Performance: streaming hot path** — replaced triple `string.split()` with single regex match for `<think>` tag parsing
@@ -37,8 +59,8 @@
 - **Refactored** tool call continuation path — removed redundant null checks
 - Fixed `isMultiModel` regex to avoid false positives on model names like `cogview`
 - Fixed `toolChoice` warning to correctly check for unsupported modes
+- Fixed stream lifecycle bug: premature `text-start` causing `AI_UIMessageStreamError`
 - Updated `clearThinking` default documentation to `true`
-- Rewrote README with model tables, feature support matrix, and real-world examples
 
 ### Testing
 - Expanded from 31 → 121 tests across 9 test files

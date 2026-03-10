@@ -64,16 +64,12 @@ describe("ZhipuImageModel", () => {
     expect(result.images).toStrictEqual(["https://example.com/image.png"]);
   });
 
-  it("should include providerMetadata with image URLs", async () => {
+  it("should not include unnecessary providerMetadata", async () => {
     prepareJsonResponse({ url: "https://example.com/image.png" });
 
     const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "A cat" });
 
-    expect(result.providerMetadata).toStrictEqual({
-      zhipu: {
-        images: [{ url: "https://example.com/image.png" }],
-      },
-    });
+    expect(result.providerMetadata).toBeUndefined();
   });
 
   it("should pass model and prompt in request body", async () => {

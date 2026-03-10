@@ -377,6 +377,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
     let isFirstChunk = true;
     let isActiveReasoning = false;
     let isActiveText = false;
+    let reasoningCharCount = 0;
+    let textCharCount = 0;
 
     return {
       stream: response.pipeThrough(
@@ -421,7 +423,10 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
             }
 
             if (value.usage != null) {
-              usage = computeTokenUsage(value.usage);
+              usage = computeTokenUsage(value.usage, {
+                reasoningChars: reasoningCharCount,
+                textChars: textCharCount,
+              });
             }
 
             const choice = value.choices[0];
@@ -445,6 +450,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
             const delta = choice.delta;
 
             if (delta.reasoning_content != null) {
+              reasoningCharCount += delta.reasoning_content.length;
+
               if (!isActiveReasoning) {
                 controller.enqueue({
                   type: "reasoning-start",
@@ -461,6 +468,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
             }
 
             if (delta.content != null) {
+              textCharCount += delta.content.length;
+
               // Close reasoning part before starting text
               if (isActiveReasoning) {
                 controller.enqueue({
